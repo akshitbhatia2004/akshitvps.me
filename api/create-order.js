@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     const APP_ID = process.env.CASHFREE_APP_ID;
     const SECRET = process.env.CASHFREE_SECRET;
     const ENV =
-      (process.env.CASHFREE_ENV || "TEST").toUpperCase() === "PROD"
+      (process.env.CASHFREE_ENV || "TEST").toUpperCase() === "PRODUCTON"
         ? "https://api.cashfree.com/pg"
         : "https://sandbox.cashfree.com/pg";
 
