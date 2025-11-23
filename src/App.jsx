@@ -64,7 +64,7 @@ export default function App(){
     if (typeof window.Cashfree !== 'undefined') {
       console.log("Using Cashfree Web SDK V3");
 
-      const cashfree = window.Cashfree({ mode: "sandbox" });
+      const cashfree = window.Cashfree({ mode: "production" });
 
       cashfree.checkout({
         paymentSessionId: sessionId,
