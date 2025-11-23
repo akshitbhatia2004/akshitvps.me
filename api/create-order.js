@@ -28,14 +28,15 @@ export default async function handler(req, res) {
     };
 
     const r = await fetch(`${ENV}/orders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-client-id': APP_ID,
-        'x-client-secret': SECRET
-      },
-      body: JSON.stringify(body)
-    });
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-version': '2023-08-01',         // <<--- add this header
+    'x-client-id': APP_ID,
+    'x-client-secret': SECRET
+  },
+  body: JSON.stringify(body)
+});
 
     const data = await r.json();
     if (!r.ok) return res.status(502).json({ error: 'Cashfree error', details: data });
