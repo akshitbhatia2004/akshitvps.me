@@ -1,27 +1,33 @@
-// Vercel Serverless: create-order.js
-// Creates a Cashfree order using server-side env vars.
+// api/create-order.js
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const { amount, customer } = req.body;
-    if (!amount || !customer || !customer.email) return res.status(400).json({ error: 'Missing amount or customer' });
+    if (!amount || !customer?.email) return res.status(400).json({ error: 'Missing amount or customer.email' });
 
     const APP_ID = process.env.CASHFREE_APP_ID;
     const SECRET = process.env.CASHFREE_SECRET;
-    const ENV = process.env.CASHFREE_ENV === 'PROD' ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
+    const ENV = (process.env.CASHFREE_ENV || 'TEST').toUpperCase() === 'PROD'
+      ? 'https://api.cashfree.com/pg'
+      : 'https://sandbox.cashfree.com/pg';
 
+    // Create order body (adjust fields to your needs)
     const body = {
       order_amount: Number(amount).toFixed(2),
       order_currency: 'INR',
-      order_note: `Order for ${customer.email}`,
+      order_note: `AkshitVPS order for ${customer.email}`,
       customer_details: {
-        customer_email: customer.email,
+        customer_id: customer.id || customer.email,
+        customer_phone: customer.phone || '',
         customer_name: customer.name || 'Customer',
-        customer_phone: customer.phone || ''
-      }
+        customer_email: customer.email
+      },
+      // Optional:
+      // return_url: 'https://akshitvps.me/payment-callback'  // if you want redirect after payment
+      // notify_url: 'https://akshitvps.me/api/webhook'      // webhook endpoint (recommended)
     };
 
     const r = await fetch(`${ENV}/orders`, {
@@ -36,9 +42,12 @@ export default async function handler(req, res) {
 
     const data = await r.json();
     if (!r.ok) return res.status(502).json({ error: 'Cashfree error', details: data });
+
+    // The response includes a payment session id / payment link you will use on frontend
     return res.status(200).json(data);
   } catch (err) {
-    console.error(err);
+    console.error('create-order error', err);
     return res.status(500).json({ error: 'server_error', message: err.message });
   }
 }
+
