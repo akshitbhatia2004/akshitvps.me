@@ -1,49 +1,61 @@
 // api/create-order.js
-// Uses the global fetch available in Vercel's Node runtime (no node-fetch dependency required).
+// No need for node-fetch; Vercel has global fetch.
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
   try {
     const { amount, customer, metadata } = req.body;
-    if (!amount || !customer?.email) return res.status(400).json({ error: 'Missing amount or customer.email' });
+
+    if (!amount || !customer?.email) {
+      return res.status(400).json({ error: "Missing amount or customer.email" });
+    }
 
     const APP_ID = process.env.CASHFREE_APP_ID;
     const SECRET = process.env.CASHFREE_SECRET;
-    const ENV = (process.env.CASHFREE_ENV || 'TEST').toUpperCase() === 'PROD'
-      ? 'https://api.cashfree.com/pg'
-      : 'https://sandbox.cashfree.com/pg';
+    const ENV =
+      (process.env.CASHFREE_ENV || "TEST").toUpperCase() === "PROD"
+        ? "https://api.cashfree.com/pg"
+        : "https://sandbox.cashfree.com/pg";
+
+    // FIX: customer_id must be alphanumeric
+    const safeCustomerId = customer.email.replace(/[^a-zA-Z0-9]/g, "");
 
     const body = {
       order_amount: Number(amount).toFixed(2),
-      order_currency: 'INR',
-      order_note: `AkshitVPS order for ${customer.email}`,
+      order_currency: "INR",
+      order_note: `Akshit VPS order`,
       customer_details: {
-        customer_id: customer.id || customer.email,
-        customer_phone: customer.phone || '',
-        customer_name: customer.name || 'Customer',
-        customer_email: customer.email
+        customer_id: safeCustomerId || "user001",
+        customer_name: customer.name || "User",
+        customer_email: customer.email,
+        customer_phone: customer.phone || "9999999999"
       },
       ...(metadata ? { order_meta: metadata } : {})
     };
 
     const r = await fetch(`${ENV}/orders`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-version': '2023-08-01',         // <<--- add this header
-    'x-client-id': APP_ID,
-    'x-client-secret': SECRET
-  },
-  body: JSON.stringify(body)
-});
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-version": "2023-08-01", // REQUIRED
+        "x-client-id": APP_ID,
+        "x-client-secret": SECRET
+      },
+      body: JSON.stringify(body)
+    });
 
     const data = await r.json();
-    if (!r.ok) return res.status(502).json({ error: 'Cashfree error', details: data });
+
+    if (!r.ok) {
+      return res.status(502).json({ error: "Cashfree error", details: data });
+    }
 
     return res.status(200).json(data);
   } catch (err) {
-    console.error('create-order error', err);
-    return res.status(500).json({ error: 'server_error', message: err.message });
+    console.error("create-order error", err);
+    return res.status(500).json({ error: "server_error", message: err.message });
   }
 }
