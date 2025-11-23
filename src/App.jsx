@@ -33,7 +33,6 @@ export default function App(){
 
   async function handleBuy(plan){
   try{
-    // create order on server
     const resp = await fetch('/api/create-order', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -47,62 +46,42 @@ export default function App(){
     const data = await resp.json();
     console.log('create-order response:', data);
 
-    // 1) if server returns a hosted payment link -> redirect
-    const paymentLink = data.payment_link || (data.data && data.data.payment_link);
-    if (paymentLink) {
-      console.log('Redirecting to payment_link', paymentLink);
-      window.location.href = paymentLink;
-      return;
-    }
+    const sessionId =
+      data.payment_session_id ||
+      (data.data &&
+        data.data.payment_sessions &&
+        data.data.payment_sessions[0] &&
+        data.data.payment_sessions[0].payment_session_id);
 
-    // 2) find a session id in the response
-    const sessionId = data.payment_session_id || (data.data && data.data.payment_sessions && data.data.payment_sessions[0] && data.data.payment_sessions[0].payment_session_id);
-    console.log('sessionId:', sessionId);
+    console.log("sessionId:", sessionId);
 
     if (!sessionId) {
-      alert('No payment link or session_id returned. Check console for create-order response.');
+      alert("No session returned");
       return;
     }
 
-    // 3) Try Cashfree SDK (two common globals)
-    // Try window.cashfree first (some docs/examples use this)
-    if (typeof window.cashfree !== 'undefined' && typeof window.cashfree.checkout === 'function') {
-      console.log('Using window.cashfree.checkout SDK');
-      window.cashfree.checkout({ paymentSessionId: sessionId, environment: 'TEST' });
-      return;
-    }
-
-    // Try window.Cashfree (other docs use this)
+    // --- FIXED CASHFREE V3 SDK ---
     if (typeof window.Cashfree !== 'undefined') {
-  console.log("Using Cashfree Web SDK V3");
+      console.log("Using Cashfree Web SDK V3");
 
-  const cashfree = window.Cashfree({ mode: "sandbox" });
+      const cashfree = window.Cashfree({ mode: "sandbox" });
 
-  cashfree.checkout({
-    paymentSessionId: sessionId,
-    redirectTarget: "_self"
-  });
+      cashfree.checkout({
+        paymentSessionId: sessionId,
+        redirectTarget: "_self"
+      });
 
-  return;
-    }
-        if (typeof cf.open === 'function') {
-          cf.open({ paymentSessionId: sessionId });
-          return;
-        }
-      } catch (e) {
-        console.warn('Error calling window.Cashfree methods', e);
-      }
+      return;
     }
 
-    // 4) SDK not loaded or methods not found -> fallback to hosted checkout redirect (sandbox)
-    // NOTE: if this particular hosted URL doesn't match your Cashfree account, try opening the sandbox URL shown in server logs
-    const fallbackUrl = `https://sandbox.cashfree.com/pg/checkout?payment_session_id=${encodeURIComponent(sessionId)}`;
-    console.warn('Cashfree SDK not found — falling back to redirect URL:', fallbackUrl);
-    window.location.href = fallbackUrl;
+    // fallback
+    window.location.href =
+      "https://sandbox.cashfree.com/pg/checkout?payment_session_id=" +
+      sessionId;
 
   } catch (e) {
-    console.error('handleBuy error', e);
-    alert('Payment start failed: ' + (e.message || e));
+    console.error(e);
+    alert("Payment start failed");
   }
   }
 
