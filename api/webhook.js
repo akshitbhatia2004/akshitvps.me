@@ -1,3 +1,4 @@
+// api/webhook.js
 import crypto from 'crypto';
 
 export default async function handler(req, res) {
@@ -24,7 +25,7 @@ export default async function handler(req, res) {
   try { json = JSON.parse(rawBody); } catch (e) { return res.status(400).json({ error: 'Invalid JSON' }); }
 
   console.log('Cashfree webhook payload:', json);
-  // Here you should update your order DB and provision VPS/RDP as needed.
+  // TODO: update order status & provision VPS here based on json
 
   res.status(200).json({ received: true });
 }
