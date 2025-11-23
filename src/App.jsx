@@ -74,13 +74,17 @@ export default function App(){
 
     // Try window.Cashfree (other docs use this)
     if (typeof window.Cashfree !== 'undefined') {
-      console.log('Using window.Cashfree SDK');
-      try {
-        const cf = new window.Cashfree('TEST'); // 'TEST' for sandbox
-        if (typeof cf.checkout === 'function') {
-          cf.checkout({ paymentSessionId: sessionId, redirect: 'true' });
-          return;
-        }
+  console.log("Using Cashfree Web SDK V3");
+
+  const cashfree = window.Cashfree({ mode: "sandbox" });
+
+  cashfree.checkout({
+    paymentSessionId: sessionId,
+    redirectTarget: "_self"
+  });
+
+  return;
+    }
         if (typeof cf.open === 'function') {
           cf.open({ paymentSessionId: sessionId });
           return;
