@@ -1,0 +1,226 @@
+import React, { useState, useEffect } from "react";
+
+// akshitvps.me - Single-file React App (Tailwind classes used) // - Homepage (hero, features, pricing) // - Checkout flow (Cashfree placeholder) // - Customer dashboard (orders saved in localStorage) // - Admin panel (simple password-protected, manage orders & add plans)
+
+// IMPORTANT: Replace CASHFREE_CLIENT_ID and CASHFREE_SECRET placeholders // with your real Cashfree credentials before enabling live payments.
+
+const DEFAULT_PLANS = [ { id: 'vps-1', title: 'VPS 2C / 2GB', cpu: '2 Core', ram: '2GB', disk: '50GB', price: 400 }, { id: 'vps-2', title: 'VPS 2C / 4GB', cpu: '2 Core', ram: '4GB', disk: '50GB', price: 500 }, { id: 'vps-3', title: 'VPS 4C / 8GB', cpu: '4 Core', ram: '8GB', disk: '50GB', price: 700 }, { id: 'vps-4', title: 'VPS 4C / 12GB', cpu: '4 Core', ram: '12GB', disk: '80GB', price: 850 }, { id: 'vps-5', title: 'VPS 4C / 16GB', cpu: '4 Core', ram: '16GB', disk: '80GB', price: 1200 } ];
+
+const STORAGE_KEYS = { PLANS: 'akshitvps_plans', ORDERS: 'akshitvps_orders' };
+
+function useLocalStorage(key, initial) { const [state, setState] = useState(() => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : initial; } catch(e){ return initial; } }); useEffect(() => { localStorage.setItem(key, JSON.stringify(state)); }, [key, state]); return [state, setState]; }
+
+export default function App() { const [plans, setPlans] = useLocalStorage(STORAGE_KEYS.PLANS, DEFAULT_PLANS); const [orders, setOrders] = useLocalStorage(STORAGE_KEYS.ORDERS, []);
+
+const [route, setRoute] = useState('home'); // 'home' | 'dashboard' | 'admin' const [checkoutPlan, setCheckoutPlan] = useState(null); const [showCheckout, setShowCheckout] = useState(false); const [userEmail, setUserEmail] = useState(''); const [adminAuthed, setAdminAuthed] = useState(false);
+
+// Simple router helper useEffect(()=>{ const h = (e)=>{ if(e.key==='Escape'){ setShowCheckout(false); } }; window.addEventListener('keydown', h); return ()=>window.removeEventListener('keydown', h); },[]);
+
+function beginCheckout(plan){ setCheckoutPlan(plan); setShowCheckout(true); }
+
+function createOrder({planId, name, email, billingCycle='monthly'}){ const plan = plans.find(p=>p.id===planId); if(!plan) throw new Error('Plan not found'); const order = { id: 'ord_'+Math.random().toString(36).slice(2,9), planId: plan.id, planTitle: plan.title, price: plan.price, name, email, status: 'pending', createdAt: new Date().toISOString(), ipLocation: 'Noida, India (Indian IP)' }; const newOrders = [order, ...orders]; setOrders(newOrders); // Simulate redirect to Cashfree hosted checkout OR return checkout token // NOTE: Replace with real Cashfree integration in production. return order; }
+
+function markOrderPaid(orderId){ const newOrders = orders.map(o=> o.id===orderId? {...o, status:'paid'} : o); setOrders(newOrders); }
+
+function adminLogin(password){ // default password: "admin123" -> CHANGE in production if(password === 'admin123') { setAdminAuthed(true); return true; } return false; }
+
+function addPlan(plan){ setPlans(prev => [{ ...plan, id: plan.id || 'p_'+Math.random().toString(36).slice(2,6) }, ...prev]); }
+
+function removePlan(id){ setPlans(prev => prev.filter(p=>p.id!==id)); }
+
+function refundOrder(id){ setOrders(prev => prev.map(o=> o.id===id ? {...o, status:'refunded'} : o)); }
+
+return ( <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-gray-100 font-sans"> <Header onNavigate={(r)=>{ setRoute(r); setShowCheckout(false); }} />
+
+<main className="max-w-6xl mx-auto p-6">
+    {route === 'home' && (
+      <>
+        <Hero />
+        <Features />
+        <section className="mt-10">
+          <h2 className="text-3xl font-extrabold mb-4">Plans — Gaming-style</h2>
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+            {plans.map(plan=> (
+              <PricingCard key={plan.id} plan={plan} onBuy={()=>beginCheckout(plan)} />
+            ))}
+            {/* Add-one slot for owners to add plans later */}
+            <div className="p-6 rounded-2xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-xl font-semibold">Want to add more plans?</div>
+                <div className="text-sm mt-2">Admin panel lets you add unlimited plans & prices.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-10">
+          <h3 className="text-2xl font-bold mb-3">Why choose AkshitVPS?</h3>
+          <ul className="grid md:grid-cols-3 gap-4">
+            <li className="p-4 border rounded-lg bg-gradient-to-br from-black to-gray-900">Noida-based Indian IPs</li>
+            <li className="p-4 border rounded-lg bg-gradient-to-br from-black to-gray-900">Windows 11 RDP & Ubuntu VPS</li>
+            <li className="p-4 border rounded-lg bg-gradient-to-br from-black to-gray-900">Cashfree payments (INR)</li>
+          </ul>
+        </section>
+      </>
+    )}
+
+    {route === 'dashboard' && (
+      <CustomerDashboard orders={orders} />
+    )}
+
+    {route === 'admin' && (
+      <AdminPanel
+        authed={adminAuthed}
+        onLogin={adminLogin}
+        orders={orders}
+        plans={plans}
+        addPlan={addPlan}
+        removePlan={removePlan}
+        markPaid={markOrderPaid}
+        refundOrder={refundOrder}
+      />
+    )}
+
+  </main>
+
+  <Footer />
+
+  {showCheckout && checkoutPlan && (
+    <CheckoutModal
+      plan={checkoutPlan}
+      onClose={()=>{ setShowCheckout(false); setCheckoutPlan(null); }}
+      onCreateOrder={(payload)=>{
+        const o = createOrder(payload);
+        // Simulate Cashfree: open hosted checkout in new tab (placeholder)
+        // In production: call your backend to create order & generate payment link/token
+        window.alert(`Order created: ${o.id} — In production you should redirect to Cashfree hosted checkout.`);
+        setShowCheckout(false);
+        setCheckoutPlan(null);
+        // Auto-mark paid for demo purposes: comment out in production
+        //markOrderPaid(o.id);
+      }}
+    />
+  )}
+</div>
+
+); }
+
+/* ------------------- Components ------------------- */ function Header({ onNavigate }){ return ( <header className="py-4 border-b border-gray-800"> <div className="max-w-6xl mx-auto flex items-center justify-between px-4"> <div className="flex items-center gap-3 cursor-pointer" onClick={()=>onNavigate('home')}> <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-600 to-purple-600 flex items-center justify-center text-black font-bold">AV</div> <div> <div className="font-bold text-lg">AkshitVPS</div> <div className="text-xs text-gray-400">Gaming-grade VPS & RDP — Noida IPs</div> </div> </div>
+
+<nav className="flex gap-4 items-center">
+      <button className="text-sm hover:underline" onClick={()=>onNavigate('home')}>Home</button>
+      <button className="text-sm hover:underline" onClick={()=>onNavigate('dashboard')}>Dashboard</button>
+      <button className="text-sm hover:underline" onClick={()=>onNavigate('admin')}>Admin</button>
+    </nav>
+  </div>
+</header>
+
+); }
+
+function Hero(){ return ( <section className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-gray-900 via-black to-gray-900 border border-gray-800"> <div className="flex flex-col md:flex-row gap-6 items-center"> <div className="flex-1"> <h1 className="text-4xl font-extrabold">Fast Gaming VPS & Windows RDP — <span className="text-pink-500">Noida IPs</span></h1> <p className="mt-3 text-gray-300">Low-latency Indian IPs, powerful CPUs, and easy payments with Cashfree. Ideal for game servers, dev environments, and remote desktops.</p> <div className="mt-6 flex gap-3"> <a className="px-4 py-2 rounded-lg bg-pink-600 text-black font-semibold" href="#plans">See Plans</a> <a className="px-4 py-2 rounded-lg border border-gray-700" href="#contact">Contact Sales</a> </div> </div> <div className="w-full md:w-96 p-4 rounded-xl border border-gray-800 bg-gradient-to-br from-black to-gray-900"> <div className="text-center"> <div className="text-xl font-bold">Instant setup</div> <div className="text-sm text-gray-400 mt-1">Ubuntu VPS & Windows 11 RDP</div> <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-300"> <div className="p-2 border rounded">Noida IP</div> <div className="p-2 border rounded">24/7 Support</div> <div className="p-2 border rounded">SSD Storage</div> <div className="p-2 border rounded">DDOS Protection</div> </div> </div> </div> </div> </section> ); }
+
+function Features(){ return ( <section className="mt-8"> <h3 className="text-2xl font-bold mb-3">Features</h3> <div className="grid md:grid-cols-3 gap-4"> <div className="p-4 border rounded-lg">Ubuntu & Windows 11</div> <div className="p-4 border rounded-lg">Choice of CPU/RAM/Disk</div> <div className="p-4 border rounded-lg">Indian IPs — Noida</div> </div> </section> ); }
+
+function PricingCard({plan, onBuy}){ return ( <div className="p-6 rounded-2xl border border-gray-800 bg-gradient-to-br from-black to-gray-900 flex flex-col justify-between"> <div> <div className="text-xl font-semibold mb-1">{plan.title}</div> <div className="text-sm text-gray-400">{plan.cpu} • {plan.ram} • {plan.disk}</div> </div> <div className="mt-4 flex items-end justify-between"> <div> <div className="text-2xl font-extrabold">₹{plan.price}</div> <div className="text-xs text-gray-500">/ month</div> </div> <button onClick={onBuy} className="px-4 py-2 rounded-lg bg-pink-600 text-black font-semibold">Buy</button> </div> </div> ); }
+
+function CheckoutModal({plan, onClose, onCreateOrder}){ const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [loading, setLoading] = useState(false);
+
+return ( <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"> <div className="w-full max-w-md p-6 rounded-2xl bg-gradient-to-br from-gray-900 to-black border border-gray-800"> <div className="flex items-center justify-between mb-4"> <div className="font-bold text-lg">Checkout — {plan.title}</div> <button onClick={onClose} className="text-gray-400">Close</button> </div> <div className="space-y-3"> <div> <label className="text-xs text-gray-400">Name</label> <input value={name} onChange={e=>setName(e.target.value)} className="w-full mt-1 p-2 rounded bg-gray-800 border border-gray-700 text-white" /> </div> <div> <label className="text-xs text-gray-400">Email</label> <input value={email} onChange={e=>setEmail(e.target.value)} className="w-full mt-1 p-2 rounded bg-gray-800 border border-gray-700 text-white" /> </div>
+
+<div className="pt-3 border-t border-gray-800 flex items-center justify-between">
+        <div>
+          <div className="text-sm">Amount</div>
+          <div className="font-bold text-xl">₹{plan.price}</div>
+        </div>
+        <div>
+          <button disabled={!name || !email || loading} onClick={async ()=>{
+            setLoading(true);
+            try{
+              // Create order locally; in production call your backend to create payment token & redirect
+              onCreateOrder({ planId: plan.id, name, email });
+            }catch(e){
+              alert('Failed to create order: '+e.message);
+            }finally{ setLoading(false); }
+          }} className="px-4 py-2 rounded-lg bg-pink-600 text-black font-semibold">Pay with Cashfree</button>
+        </div>
+      </div>
+
+      <div className="text-xs text-gray-500">Note: This demo stores orders in your browser localStorage. Replace the createOrder call with your server-side Cashfree integration to accept live payments.</div>
+    </div>
+  </div>
+</div>
+
+); }
+
+function CustomerDashboard({orders}){ const [email, setEmail] = useState(''); const myOrders = email ? orders.filter(o=> o.email.toLowerCase()===email.toLowerCase()) : []; return ( <section> <h2 className="text-2xl font-bold mb-4">Customer Dashboard</h2> <div className="mb-4"> <label className="text-sm">Enter your email to view orders</label> <div className="flex gap-2 mt-2"> <input className="flex-1 p-2 rounded bg-gray-900 border border-gray-700" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} /> </div> </div>
+
+<div>
+    <h3 className="font-semibold mb-2">Orders</h3>
+    {myOrders.length===0 ? <div className="text-sm text-gray-400">No orders found for this email.</div> : (
+      <div className="space-y-3">
+        {myOrders.map(o=> (
+          <div key={o.id} className="p-3 border rounded bg-gradient-to-br from-black to-gray-900">
+            <div className="flex justify-between">
+              <div>
+                <div className="font-semibold">{o.planTitle}</div>
+                <div className="text-xs text-gray-400">Order: {o.id} • {new Date(o.createdAt).toLocaleString()}</div>
+              </div>
+              <div className="text-sm">₹{o.price}<div className={`mt-1 text-xs ${o.status==='paid' ? 'text-green-400' : 'text-yellow-300'}`}>{o.status}</div></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
+
+); }
+
+function AdminPanel({authed, onLogin, orders, plans, addPlan, removePlan, markPaid, refundOrder}){ const [pass, setPass] = useState(''); const [newPlan, setNewPlan] = useState({ title:'', cpu:'', ram:'', disk:'', price:0 });
+
+if(!authed) return ( <div className="max-w-md p-6 rounded bg-gradient-to-br from-black to-gray-900 border border-gray-800"> <h3 className="text-xl font-bold mb-3">Admin Login</h3> <div className="mb-3"> <input placeholder="Password" type="password" value={pass} onChange={e=>setPass(e.target.value)} className="w-full p-2 rounded bg-gray-900 border border-gray-700" /> </div> <div> <button onClick={()=>{ const ok = onLogin(pass); if(!ok) alert('Wrong password. Default for demo: admin123'); }} className="px-4 py-2 rounded bg-pink-600 text-black">Login</button> <div className="text-xs text-gray-400 mt-2">Default demo password: <strong>admin123</strong> — change this in production.</div> </div> </div> );
+
+return ( <div> <h2 className="text-2xl font-bold mb-4">Admin Panel</h2> <section className="mb-6"> <h3 className="font-semibold mb-2">Add Plan</h3> <div className="grid md:grid-cols-5 gap-2"> <input placeholder="Title" className="p-2 bg-gray-900 border" value={newPlan.title} onChange={e=>setNewPlan(p=>({...p, title:e.target.value}))} /> <input placeholder="CPU" className="p-2 bg-gray-900 border" value={newPlan.cpu} onChange={e=>setNewPlan(p=>({...p, cpu:e.target.value}))} /> <input placeholder="RAM" className="p-2 bg-gray-900 border" value={newPlan.ram} onChange={e=>setNewPlan(p=>({...p, ram:e.target.value}))} /> <input placeholder="Disk" className="p-2 bg-gray-900 border" value={newPlan.disk} onChange={e=>setNewPlan(p=>setNewPlan(p=>({...p, disk:e.target.value}))) } /> <input placeholder="Price" type="number" className="p-2 bg-gray-900 border" value={newPlan.price} onChange={e=>setNewPlan(p=>({...p, price: Number(e.target.value) }))} /> </div> <div className="mt-2"> <button onClick={()=>{ if(!newPlan.title) return alert('Enter title'); addPlan(newPlan); setNewPlan({ title:'', cpu:'', ram:'', disk:'', price:0 }); }} className="px-4 py-2 rounded bg-pink-600 text-black">Add Plan</button> </div> </section>
+
+<section className="mb-6">
+    <h3 className="font-semibold mb-2">Plans</h3>
+    <div className="space-y-2">
+      {plans.map(p=> (
+        <div key={p.id} className="p-3 border rounded flex justify-between items-center">
+          <div>
+            <div className="font-semibold">{p.title} — ₹{p.price}/mo</div>
+            <div className="text-xs text-gray-400">{p.cpu} • {p.ram} • {p.disk}</div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={()=>removePlan(p.id)} className="px-3 py-1 border rounded">Remove</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section>
+    <h3 className="font-semibold mb-2">Orders</h3>
+    <div className="space-y-2">
+      {orders.length===0 ? <div className="text-sm text-gray-400">No orders yet</div> : orders.map(o=> (
+        <div key={o.id} className="p-3 border rounded bg-gradient-to-br from-black to-gray-900 flex justify-between items-center">
+          <div>
+            <div className="font-semibold">{o.planTitle} • ₹{o.price}</div>
+            <div className="text-xs text-gray-400">{o.email} • {o.id} • {new Date(o.createdAt).toLocaleString()}</div>
+          </div>
+          <div className="flex gap-2 items-center">
+            <div className={`text-sm ${o.status==='paid'? 'text-green-400' : 'text-yellow-300'}`}>{o.status}</div>
+            {o.status !== 'paid' && <button onClick={()=>markPaid(o.id)} className="px-3 py-1 rounded bg-green-700">Mark Paid</button>}
+            <button onClick={()=>refundOrder(o.id)} className="px-3 py-1 rounded border">Refund</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+</div>
+
+); }
+
+function Footer(){ return ( <footer className="mt-12 py-6 border-t border-gray-800"> <div className="max-w-6xl mx-auto px-4 text-sm text-gray-400">© {new Date().getFullYear()} AkshitVPS — akshitvps.me • Built for gaming & dev. Replace this footer with your legal & support links.</div> </footer> ); }
+
+/* ------------------ END ------------------ */
