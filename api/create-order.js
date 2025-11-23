@@ -1,7 +1,9 @@
-import fetch from 'node-fetch';
+// api/create-order.js
+// Uses the global fetch available in Vercel's Node runtime (no node-fetch dependency required).
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
   try {
     const { amount, customer, metadata } = req.body;
     if (!amount || !customer?.email) return res.status(400).json({ error: 'Missing amount or customer.email' });
@@ -22,7 +24,7 @@ export default async function handler(req, res) {
         customer_name: customer.name || 'Customer',
         customer_email: customer.email
       },
-      ...metadata ? { order_meta: metadata } : {}
+      ...(metadata ? { order_meta: metadata } : {})
     };
 
     const r = await fetch(`${ENV}/orders`, {
@@ -37,7 +39,7 @@ export default async function handler(req, res) {
 
     const data = await r.json();
     if (!r.ok) return res.status(502).json({ error: 'Cashfree error', details: data });
-    // return full cashfree response to frontend
+
     return res.status(200).json(data);
   } catch (err) {
     console.error('create-order error', err);
