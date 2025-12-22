@@ -25,10 +25,10 @@ export default async function handler(req, res) {
       order_currency: "INR",
       order_note: `Akshit VPS order`,
       customer_details: {
-        customer_id: safeCustomerId || "",
-        customer_name: customer.name || "",
+        customer_id: safeCustomerId ||,
+        customer_name: customer.name ||,
         customer_email: customer.email,
-        customer_phone: customer.phone || ""
+        customer_phone: customer.phone ||
       },
       ...(metadata ? { order_meta: metadata } : {})
     };
