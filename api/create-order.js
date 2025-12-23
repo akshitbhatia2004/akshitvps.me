@@ -19,6 +19,8 @@ export default async function handler(req, res) {
 
     // customer_id must be alphanumeric
     const safeCustomerId = (customer.email || "").replace(/[^a-zA-Z0-9]/g, "");
+    const customerEmail = customer.email.includes(@) ? customer.email : '${safeCustmerId}@gmail.com';
+    const customer.phone = customer.phone && customer.phone.length == 10 ? customer.phone : "9999999999";
 
     const body = {
       order_amount: Number(amount).toFixed(2),
@@ -26,7 +28,7 @@ export default async function handler(req, res) {
       order_note: `Akshit VPS order`,
       customer_details: {
         customer_id: safeCustomerId ||,
-        customer_name: customer.name ||,
+        customer_name: customer.name ||"user-089",
         customer_email: customer.email,
         customer_phone: customer.phone ||
       },
