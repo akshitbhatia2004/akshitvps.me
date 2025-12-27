@@ -4,11 +4,39 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { amount, customer = {}, metadata } = req.body;
+    const { amount, customer = {}, telegram, whatsapp, metadata } = req.body;
 
-    if (!amount || !customer.email) {
-      return res.status(400).json({ error: "Missing amount or customer.email" });
+    /* ---------- STRICT VALIDATION ---------- */
+
+    if (!amount) {
+      return res.status(400).json({ error: "Amount is required" });
     }
+
+    if (!customer.email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    if (!telegram) {
+      return res.status(400).json({ error: "Telegram number is required" });
+    }
+
+    if (!whatsapp) {
+      return res.status(400).json({ error: "WhatsApp number is required" });
+    }
+
+    /* ---------- SANITIZATION ---------- */
+
+    const safeCustomerId =
+      customer.email.replace(/[^a-zA-Z0-9]/g, "") || "guest001";
+
+    const customerEmail = customer.email;
+
+    const customerPhone =
+      customer.phone && String(customer.phone).length === 10
+        ? String(customer.phone)
+        : String(whatsapp); // fallback
+
+    /* ---------- CASHFREE CONFIG ---------- */
 
     const APP_ID = process.env.CASHFREE_APP_ID;
     const SECRET = process.env.CASHFREE_SECRET;
@@ -17,21 +45,6 @@ export default async function handler(req, res) {
       (process.env.CASHFREE_ENV || "TEST").toUpperCase() === "PROD"
         ? "https://api.cashfree.com/pg"
         : "https://sandbox.cashfree.com/pg";
-
-    /* ---------- SAFE CUSTOMER DATA ---------- */
-
-    // customer_id must be alphanumeric
-    const safeCustomerId =
-      customer.email.replace(/[^a-zA-Z0-9]/g, "") || "guest001";
-
-    const customerEmail = customer.email.includes("@")
-      ? customer.email
-      : `${safeCustomerId}@gmail.com`;
-
-    const customerPhone =
-      customer.phone && String(customer.phone).length === 10
-        ? String(customer.phone)
-        : "";
 
     /* ---------- ORDER BODY ---------- */
 
@@ -45,10 +58,14 @@ export default async function handler(req, res) {
         customer_email: customerEmail,
         customer_phone: customerPhone
       },
-      ...(metadata ? { order_meta: metadata } : {})
+      order_meta: {
+        telegram_number: telegram,
+        whatsapp_number: whatsapp,
+        ...(metadata || {})
+      }
     };
 
-    /* ---------- WEBHOOK URL ---------- */
+    /* ---------- WEBHOOK ---------- */
 
     const HOST =
       process.env.SITE_URL ||
