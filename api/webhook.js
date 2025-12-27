@@ -1,42 +1,77 @@
-import crypto from 'crypto';
+import crypto from "crypto";
+
+export const config = {
+  api: {
+    bodyParser: false, // REQUIRED for raw body
+  },
+};
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
-
-  const rawBody = await getRawBody(req);
-  const signature = req.headers['x-webhook-signature'] || req.headers['X-Webhook-Signature'];
-  const timestamp = req.headers['x-webhook-timestamp'] || req.headers['X-Webhook-Timestamp'];
-
-  if (!signature || !timestamp) return res.status(400).json({ error: 'Missing signature or timestamp' });
-
-  const SECRET = process.env.CASHFREE_SECRET || '';
-  const payloadToSign = `${timestamp}|${rawBody}`;
-  const hmac = crypto.createHmac('sha256', SECRET);
-  hmac.update(payloadToSign);
-  const expectedSignature = hmac.digest('hex');
-
-  if (expectedSignature !== signature) {
-    console.warn('Webhook signature mismatch', { expectedSignature, signature });
-    return res.status(401).json({ error: 'Invalid signature' });
+  if (req.method !== "POST") {
+    return res.status(405).end("Method Not Allowed");
   }
 
-  let json;
-  try { json = JSON.parse(rawBody); } catch (e) { return res.status(400).json({ error: 'Invalid JSON' }); }
+  const rawBody = await getRawBody(req);
 
-  console.log('Cashfree webhook payload:', json);
-  // TODO: update order DB and provision VPS here.
+  const signature = req.headers["x-webhook-signature"];
+  const timestamp = req.headers["x-webhook-timestamp"];
 
-  res.status(200).json({ received: true });
+  if (!signature || !timestamp) {
+    return res.status(400).json({ error: "Missing signature or timestamp" });
+  }
+
+  const SECRET = process.env.CASHFREE_WEBHOOK_SECRET;
+  if (!SECRET) {
+    console.error("Missing CASHFREE_WEBHOOK_SECRET");
+    return res.status(500).json({ error: "Server misconfigured" });
+  }
+
+  // 🔐 CASHFREE SIGNATURE VERIFICATION
+  const signedPayload = timestamp + rawBody;
+
+  const expectedSignature = crypto
+    .createHmac("sha256", SECRET)
+    .update(signedPayload)
+    .digest("base64");
+
+  if (expectedSignature !== signature) {
+    console.warn("Invalid webhook signature", {
+      expectedSignature,
+      signature,
+    });
+    return res.status(401).json({ error: "Invalid signature" });
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch {
+    return res.status(400).json({ error: "Invalid JSON" });
+  }
+
+  console.log("✅ Cashfree webhook verified:", payload);
+
+  // ✅ PAYMENT SUCCESS EVENT
+  if (payload.type === "PAYMENT_SUCCESS") {
+    const orderId = payload.data.order.order_id;
+    const paymentId = payload.data.payment.payment_id;
+
+    console.log("💰 Payment successful:", { orderId, paymentId });
+
+    // TODO:
+    // 1. markOrderPaid(orderId)
+    // 2. provision VPS
+    // 3. send WhatsApp / Telegram message
+  }
+
+  return res.status(200).json({ received: true });
 }
 
 async function getRawBody(req) {
-  if (typeof req.body === 'string') return req.body;
-  if (req.body && typeof req.body === 'object') return JSON.stringify(req.body);
   return await new Promise((resolve, reject) => {
-    let data = '';
-    req.setEncoding('utf8');
-    req.on('data', chunk => data += chunk);
-    req.on('end', () => resolve(data));
-    req.on('error', err => reject(err));
+    let data = "";
+    req.on("data", chunk => (data += chunk));
+    req.on("end", () => resolve(data));
+    req.on("error", err => reject(err));
   });
 }
