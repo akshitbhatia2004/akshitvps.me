@@ -19,12 +19,20 @@ export default function App() {
   const [orders, setOrders] = useLocalStorage('akshitvps_orders', []);
   const [route, setRoute] = useState('home');
 
+  // ✅ 1. DEFINE checkout FIRST
   const [checkout, setCheckout] = useState({
     email: "",
     telegram: "",
     whatsapp: ""
   });
 
+  // ✅ 2. THEN validate
+  const isCheckoutValid =
+    checkout.email &&
+    checkout.telegram &&
+    checkout.whatsapp;
+
+  // ✅ 3. THEN helper
   function updateCheckout(key, value) {
     setCheckout(prev => ({
       ...prev,
@@ -32,7 +40,7 @@ export default function App() {
     }));
   }
 
-  const [adminAuthed, setAdminAuthed] = useState(false)
+  const [adminAuthed, setAdminAuthed] = useState(false);
 
   function adminLogin(p){
     const expected = (import.meta.env.VITE_ADMIN_PASSWORD) || 'admin123';
@@ -112,36 +120,70 @@ export default function App() {
       </header>
 
       <main style={{ marginTop:20 }}>
-        {route==='home' && (
-          <section style={{ marginBottom: 20 }}>
-  <h2>Customer Details</h2>
+   {route === 'home' && (
+  <>
+    {/* CUSTOMER DETAILS */}
+    <section style={{ marginBottom: 20 }}>
+      <h2>Customer Details</h2>
 
-  <div style={{ display: "grid", gap: 10, maxWidth: 420 }}>
-    <input
-      placeholder="Email"
-      value={checkout.email}
-      onChange={e => updateCheckout("email", e.target.value)}
-    />
+      <div style={{ display: "grid", gap: 10, maxWidth: 420 }}>
+        <input
+          placeholder="Email"
+          value={checkout.email}
+          onChange={e => updateCheckout("email", e.target.value)}
+        />
 
-    <input
-      placeholder="Telegram Number"
-      value={checkout.telegram}
-      onChange={e => updateCheckout("telegram", e.target.value)}
-    />
+        <input
+          placeholder="Telegram Number"
+          value={checkout.telegram}
+          onChange={e => updateCheckout("telegram", e.target.value)}
+        />
 
-    <input
-      placeholder="WhatsApp Number"
-      value={checkout.whatsapp}
-      onChange={e => updateCheckout("whatsapp", e.target.value)}
-    />
-  </div>
-</section>
-        )}
+        <input
+          placeholder="WhatsApp Number"
+          value={checkout.whatsapp}
+          onChange={e => updateCheckout("whatsapp", e.target.value)}
+        />
+      </div>
 
-        {route==='admin' && (
-          <AdminPanel authed={adminAuthed} onLogin={adminLogin} orders={orders} plans={plans} addPlan={addPlan} removePlan={removePlan} markPaid={markOrderPaid} refundOrder={refundOrder} />
-        )}
-      </main>
-    </div>
-  );
-}
+      {!isCheckoutValid && (
+        <div style={{ marginTop: 8, color: "#ff6b6b" }}>
+          Fill all details to continue
+        </div>
+      )}
+    </section>
+
+    {/* PLANS + BUY BUTTON */}
+    <section>
+      <h2>Plans</h2>
+
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:12 }}>
+        {plans.map(p => (
+          <div key={p.id} style={{ padding:12, background:'#0b0b0b', borderRadius:12 }}>
+            <div style={{ fontWeight:700 }}>{p.title}</div>
+            <div style={{ color:'#999' }}>
+              {p.cpu} • {p.ram} • {p.disk}
+            </div>
+
+            <div style={{ marginTop:12, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div style={{ fontWeight:800 }}>₹{p.price}</div>
+
+              <button
+                disabled={!isCheckoutValid}
+                onClick={() => handleBuy(p)}
+                style={{
+                  background: isCheckoutValid ? '#ff007a' : '#555',
+                  padding: '8px 10px',
+                  cursor: isCheckoutValid ? 'pointer' : 'not-allowed',
+                  opacity: isCheckoutValid ? 1 : 0.6
+                }}
+              >
+                Buy
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  </>
+)}
