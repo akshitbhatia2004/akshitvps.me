@@ -20,17 +20,33 @@ export default function App() {
   const [route, setRoute] = useState('home');
 
   // ✅ 1. DEFINE checkout FIRST
-  const [checkout, setCheckout] = useState({
-    email: "",
-    telegram: "",
-    whatsapp: ""
-  });
+  const [checkout, setCheckout] = useState(() => {
+  try {
+    const saved = localStorage.getItem("akshitvps_checkout");
+    return saved
+      ? JSON.parse(saved)
+      : { email: "", telegram: "", whatsapp: "" };
+  } catch {
+    return { email: "", telegram: "", whatsapp: "" };
+  }
+});
+
+  React.useEffect(() => {
+  localStorage.setItem(
+    "akshitvps_checkout",
+    JSON.stringify(checkout)
+  );
+}, [checkout]);
+
+
 
   // ✅ 2. THEN validate
   const isCheckoutValid =
     checkout.email &&
     checkout.telegram &&
     checkout.whatsapp;
+
+  
 
   // ✅ 3. THEN helper
   function updateCheckout(key, value) {
@@ -41,6 +57,8 @@ export default function App() {
   }
 
   const [adminAuthed, setAdminAuthed] = useState(false);
+  const [loadingPlanId, setLoadingPlanId] = useState(null);
+
 
   function adminLogin(p){
     const expected = (import.meta.env.VITE_ADMIN_PASSWORD) || 'admin123';
@@ -53,11 +71,34 @@ export default function App() {
   function markOrderPaid(id){ setOrders(prev=> prev.map(o=> o.id===id ? {...o, status:'paid'} : o)); }
   function refundOrder(id){ setOrders(prev=> prev.map(o=> o.id===id ? {...o, status:'refunded'} : o)); }
 
-  async function handleBuy(plan) {
+ async function handleBuy(plan) {
+    // 1️⃣ Basic validation
   if (!checkout.email || !checkout.telegram || !checkout.whatsapp) {
     alert("Email, Telegram number and WhatsApp number are required");
     return;
   }
+
+  // ✅ EMAIL FORMAT VALIDATION (ADD HERE)
+  const emailOk = /^\S+@\S+\.\S+$/.test(checkout.email);
+  if (!emailOk) {
+    alert("Please enter a valid email");
+    return;
+  }
+
+  // 2️⃣ Phone validation (10 digits)
+const phoneRegex = /^\d{10}$/;
+if (!phoneRegex.test(checkout.telegram)) {
+  alert("Telegram number must be 10 digits");
+  return;
+}
+if (!phoneRegex.test(checkout.whatsapp)) {
+  alert("WhatsApp number must be 10 digits");
+  return;
+}
+
+   // 3️⃣ Start loading
+setLoadingPlanId(plan.id);
+
 
   try {
     const resp = await fetch("/api/create-order", {
@@ -88,23 +129,28 @@ export default function App() {
       return;
     }
 
+    // 4️⃣ Open Cashfree checkout
     if (typeof window.Cashfree !== "undefined") {
       const cashfree = window.Cashfree({ mode: "production" });
       cashfree.checkout({
         paymentSessionId: sessionId,
         redirectTarget: "_self"
       });
-      return;
+    } else {
+      // fallback
+      window.location.href =
+        "https://sandbox.cashfree.com/pg/checkout?payment_session_id=" +
+        sessionId;
     }
-
-    window.location.href =
-      "https://sandbox.cashfree.com/pg/checkout?payment_session_id=" +
-      sessionId;
   } catch (e) {
     console.error(e);
     alert("Payment start failed");
+  } finally {
+    // 5️⃣ Stop loading
+    setLoadingPlanId(null);
   }
 }
+
 
   return (
   <div className="container">
@@ -128,23 +174,34 @@ export default function App() {
             <h2>Customer Details</h2>
 
             <div style={{ display: 'grid', gap: 10, maxWidth: 420 }}>
-              <input
+              <input 
+                autoFocus
                 placeholder="Email"
                 value={checkout.email}
                 onChange={e => updateCheckout('email', e.target.value)}
               />
 
               <input
-                placeholder="Telegram Number"
-                value={checkout.telegram}
-                onChange={e => updateCheckout('telegram', e.target.value)}
-              />
-
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="Telegram Number"
+                  value={checkout.telegram}
+                  onChange={e =>
+                    updateCheckout("telegram", e.target.value.replace(/\D/g, ""))
+                  }
+                />
+                
               <input
-                placeholder="WhatsApp Number"
-                value={checkout.whatsapp}
-                onChange={e => updateCheckout('whatsapp', e.target.value)}
-              />
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="WhatsApp Number"
+                  value={checkout.whatsapp}
+                  onChange={e =>
+                    updateCheckout("whatsapp", e.target.value.replace(/\D/g, ""))
+                  }
+                />
             </div>
 
             {!isCheckoutValid && (
@@ -189,20 +246,23 @@ export default function App() {
                   >
                     <div style={{ fontWeight: 800 }}>₹{p.price}</div>
 
-                    <button
-                      disabled={!isCheckoutValid}
-                      onClick={() => handleBuy(p)}
-                      style={{
-                        background: isCheckoutValid ? '#ff007a' : '#555',
-                        padding: '8px 10px',
-                        cursor: isCheckoutValid
-                          ? 'pointer'
-                          : 'not-allowed',
-                        opacity: isCheckoutValid ? 1 : 0.6
-                      }}
-                    >
-                      Buy
-                    </button>
+              <button
+                    disabled={!isCheckoutValid || loadingPlanId !== null}
+                    onClick={() => handleBuy(p)}
+                    style={{
+                      background: isCheckoutValid ? '#ff007a' : '#555',
+                      padding: '8px 10px',
+                      cursor:
+                        !isCheckoutValid || loadingPlanId !== null
+                          ? 'not-allowed'
+                          : 'pointer',
+                      opacity: loadingPlanId !== null ? 0.6 : 1
+                    }}
+                  >
+                    {loadingPlanId === p.id ? "Processing..." : "Buy"}
+              </button>
+
+
                   </div>
                 </div>
               ))}
