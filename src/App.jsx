@@ -14,11 +14,25 @@ function useLocalStorage(key, initial){
   return [state, setState];
 }
 
-export default function App(){
+export default function App() {
   const [plans, setPlans] = useLocalStorage('akshitvps_plans', DEFAULT_PLANS);
   const [orders, setOrders] = useLocalStorage('akshitvps_orders', []);
   const [route, setRoute] = useState('home');
-  const [adminAuthed, setAdminAuthed] = useState(false);
+
+  const [checkout, setCheckout] = useState({
+    email: "",
+    telegram: "",
+    whatsapp: ""
+  });
+
+  function updateCheckout(key, value) {
+    setCheckout(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  }
+
+  const [adminAuthed, setAdminAuthed] = useState(false)
 
   function adminLogin(p){
     const expected = (import.meta.env.VITE_ADMIN_PASSWORD) || 'admin123';
