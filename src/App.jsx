@@ -107,83 +107,123 @@ export default function App() {
 }
 
   return (
-    <div className="container">
-      <header style={{ display:'flex', justifyContent:'space-between' }}>
-        <div>
-          <h1>AkshitVPS</h1>
-          <div>Ubuntu & RDP windows 11 VPS · Noida IPs</div>
-        </div>
-        <nav>
-          <button onClick={()=>setRoute('home')}>Home</button>
-          <button onClick={()=>setRoute('admin')}>Admin</button>
-        </nav>
-      </header>
-
-      <main style={{ marginTop:20 }}>
-   {route === 'home' && (
-  <>
-    {/* CUSTOMER DETAILS */}
-    <section style={{ marginBottom: 20 }}>
-      <h2>Customer Details</h2>
-
-      <div style={{ display: "grid", gap: 10, maxWidth: 420 }}>
-        <input
-          placeholder="Email"
-          value={checkout.email}
-          onChange={e => updateCheckout("email", e.target.value)}
-        />
-
-        <input
-          placeholder="Telegram Number"
-          value={checkout.telegram}
-          onChange={e => updateCheckout("telegram", e.target.value)}
-        />
-
-        <input
-          placeholder="WhatsApp Number"
-          value={checkout.whatsapp}
-          onChange={e => updateCheckout("whatsapp", e.target.value)}
-        />
+  <div className="container">
+    <header style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div>
+        <h1>AkshitVPS</h1>
+        <div>Ubuntu & RDP windows 11 VPS · Noida IPs</div>
       </div>
+      <nav>
+        <button onClick={() => setRoute('home')}>Home</button>
+        <button onClick={() => setRoute('admin')}>Admin</button>
+      </nav>
+    </header>
 
-      {!isCheckoutValid && (
-        <div style={{ marginTop: 8, color: "#ff6b6b" }}>
-          Fill all details to continue
-        </div>
+    <main style={{ marginTop: 20 }}>
+      {/* HOME */}
+      {route === 'home' && (
+        <>
+          {/* CUSTOMER DETAILS */}
+          <section style={{ marginBottom: 20 }}>
+            <h2>Customer Details</h2>
+
+            <div style={{ display: 'grid', gap: 10, maxWidth: 420 }}>
+              <input
+                placeholder="Email"
+                value={checkout.email}
+                onChange={e => updateCheckout('email', e.target.value)}
+              />
+
+              <input
+                placeholder="Telegram Number"
+                value={checkout.telegram}
+                onChange={e => updateCheckout('telegram', e.target.value)}
+              />
+
+              <input
+                placeholder="WhatsApp Number"
+                value={checkout.whatsapp}
+                onChange={e => updateCheckout('whatsapp', e.target.value)}
+              />
+            </div>
+
+            {!isCheckoutValid && (
+              <div style={{ marginTop: 8, color: '#ff6b6b' }}>
+                Fill all details to continue
+              </div>
+            )}
+          </section>
+
+          {/* PLANS */}
+          <section>
+            <h2>Plans</h2>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))',
+                gap: 12
+              }}
+            >
+              {plans.map(p => (
+                <div
+                  key={p.id}
+                  style={{
+                    padding: 12,
+                    background: '#0b0b0b',
+                    borderRadius: 12
+                  }}
+                >
+                  <div style={{ fontWeight: 700 }}>{p.title}</div>
+                  <div style={{ color: '#999' }}>
+                    {p.cpu} • {p.ram} • {p.disk}
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 12,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <div style={{ fontWeight: 800 }}>₹{p.price}</div>
+
+                    <button
+                      disabled={!isCheckoutValid}
+                      onClick={() => handleBuy(p)}
+                      style={{
+                        background: isCheckoutValid ? '#ff007a' : '#555',
+                        padding: '8px 10px',
+                        cursor: isCheckoutValid
+                          ? 'pointer'
+                          : 'not-allowed',
+                        opacity: isCheckoutValid ? 1 : 0.6
+                      }}
+                    >
+                      Buy
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
       )}
-    </section>
 
-    {/* PLANS + BUY BUTTON */}
-    <section>
-      <h2>Plans</h2>
-
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:12 }}>
-        {plans.map(p => (
-          <div key={p.id} style={{ padding:12, background:'#0b0b0b', borderRadius:12 }}>
-            <div style={{ fontWeight:700 }}>{p.title}</div>
-            <div style={{ color:'#999' }}>
-              {p.cpu} • {p.ram} • {p.disk}
-            </div>
-
-            <div style={{ marginTop:12, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <div style={{ fontWeight:800 }}>₹{p.price}</div>
-
-              <button
-                disabled={!isCheckoutValid}
-                onClick={() => handleBuy(p)}
-                style={{
-                  background: isCheckoutValid ? '#ff007a' : '#555',
-                  padding: '8px 10px',
-                  cursor: isCheckoutValid ? 'pointer' : 'not-allowed',
-                  opacity: isCheckoutValid ? 1 : 0.6
-                }}
-              >
-                Buy
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  </>
-)}
+      {/* ADMIN */}
+      {route === 'admin' && (
+        <AdminPanel
+          authed={adminAuthed}
+          onLogin={adminLogin}
+          orders={orders}
+          plans={plans}
+          addPlan={addPlan}
+          removePlan={removePlan}
+          markPaid={markOrderPaid}
+          refundOrder={refundOrder}
+        />
+      )}
+    </main>
+  </div>
+);
