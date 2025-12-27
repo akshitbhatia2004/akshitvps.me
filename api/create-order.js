@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     const customerPhone =
       customer.phone && String(customer.phone).length === 10
         ? String(customer.phone)
-        : "9999999999";
+        : "";
 
     /* ---------- ORDER BODY ---------- */
 
