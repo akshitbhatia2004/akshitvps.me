@@ -99,7 +99,7 @@ async function payNow() {
   const amountText = document.getElementById("planPrice").innerText;
   const amount = amountText.replace("₹", "").replace(" / month", "").trim();
 
-  const res = await fetch("https://YOURDOMAIN.com/create-order", {
+  const res = await fetch("/api/create-order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -122,3 +122,4 @@ async function payNow() {
 
 </body>
 </html>
+
