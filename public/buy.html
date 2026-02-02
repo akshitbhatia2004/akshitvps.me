@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buy VPS – AkshitBot</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: radial-gradient(circle at top, #0b1220, #020617);
+  color: #e5e7eb;
+}
+
+.container {
+  max-width: 520px;
+  margin: 80px auto;
+  padding: 40px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+h1 {
+  font-family: "Poppins", sans-serif;
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.plan {
+  margin: 20px 0;
+  font-size: 18px;
+  color: #cbd5f5;
+}
+
+.price {
+  font-size: 34px;
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  border-radius: 14px;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(90deg, #93c5fd, #818cf8);
+  color: #020617;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Complete Your Order</h1>
+
+  <div class="plan" id="planName"></div>
+  <div class="price" id="planPrice"></div>
+
+  <input type="text" placeholder="Your Name" required>
+  <input type="email" placeholder="Email Address" required>
+
+  <button>Proceed to Payment</button>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const plan = params.get("plan");
+const price = params.get("price");
+
+document.getElementById("planName").innerText = "Selected Plan: " + plan;
+document.getElementById("planPrice").innerText = "₹" + price + " / month";
+</script>
+
+<script>
+const cashfree = Cashfree({ mode: "production" });
+
+async function payNow() {
+  const name = document.querySelector("input[type='text']").value;
+  const email = document.querySelector("input[type='email']").value;
+
+  const amountText = document.getElementById("planPrice").innerText;
+  const amount = amountText.replace("₹", "").replace(" / month", "").trim();
+
+  const res = await fetch("https://YOURDOMAIN.com/create-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      amount: amount,
+      customer_name: name,
+      customer_email: email
+    })
+  });
+
+  const data = await res.json();
+
+  cashfree.checkout({
+    paymentSessionId: data.payment_session_id
+  });
+}
+</script>
+
+</body>
+</html>
+
+</body>
+</html>

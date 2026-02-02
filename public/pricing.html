@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing – AkshitBot VPS</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background: radial-gradient(circle at top, #0b1220, #020617);
+  color: #e5e7eb;
+}
+
+/* Header */
+header {
+  padding: 22px 8%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-family: "Poppins", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #93c5fd;
+}
+
+nav a {
+  margin-left: 26px;
+  text-decoration: none;
+  color: #c7d2fe;
+  font-weight: 500;
+}
+
+nav a:hover {
+  color: #93c5fd;
+}
+
+/* Page Title */
+.page-title {
+  text-align: center;
+  padding: 80px 10% 40px;
+}
+
+.page-title h1 {
+  font-family: "Poppins", sans-serif;
+  font-size: 42px;
+  font-weight: 700;
+}
+
+.page-title p {
+  margin-top: 12px;
+  font-size: 18px;
+  color: #cbd5f5;
+}
+
+/* Pricing Grid */
+.pricing {
+  padding: 60px 8% 90px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 30px;
+}
+
+/* Glass Card */
+.card {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  border-radius: 22px;
+  padding: 38px 30px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+}
+
+/* Popular */
+.popular {
+  border: 1px solid #93c5fd;
+  box-shadow: 0 0 0 1px rgba(147,197,253,0.3);
+}
+
+.badge {
+  display: inline-block;
+  margin-bottom: 18px;
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+  background: rgba(147,197,253,0.15);
+  color: #93c5fd;
+}
+
+/* Card Content */
+.card h3 {
+  font-family: "Poppins", sans-serif;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.price {
+  font-size: 36px;
+  font-weight: 700;
+  margin: 14px 0;
+}
+
+.card ul {
+  margin-top: 22px;
+  list-style: none;
+  color: #cbd5f5;
+}
+
+.card ul li {
+  margin: 10px 0;
+}
+
+/* Button */
+.btn {
+  margin-top: 28px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(90deg, #93c5fd, #818cf8);
+  color: #020617;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+/* Footer */
+footer {
+  padding: 28px 8%;
+  text-align: center;
+  color: #94a3b8;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+@media (max-width: 600px) {
+  .page-title h1 {
+    font-size: 32px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">AkshitBot</div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="#">Pricing</a>
+    <a href="#">Contact</a>
+  </nav>
+</header>
+
+<section class="page-title">
+  <h1>Simple, Transparent Pricing</h1>
+  <p>Premium VPS hosting with no hidden costs.</p>
+</section>
+
+<section class="pricing">
+  <div class="grid">
+
+    <div class="card">
+      <h3>Starter</h3>
+      <div class="price">₹299/mo</div>
+      <ul>
+        <li>1 GB RAM</li>
+        <li>20 GB NVMe SSD</li>
+        <li>1 TB Bandwidth</li>
+        <li>Basic Support</li>
+      </ul>
+      <button class="btn" onclick="window.location.href='buy.html?plan=Pro&price=299'">
+  Choose Plan
+</button>
+
+    </div>
+
+    <div class="card popular">
+      <span class="badge">Most Popular</span>
+      <h3>Pro</h3>
+      <div class="price">₹599/mo</div>
+      <ul>
+        <li>2 GB RAM</li>
+        <li>40 GB NVMe SSD</li>
+        <li>2 TB Bandwidth</li>
+        <li>Priority Support</li>
+      </ul>
+        <button class="btn" onclick="window.location.href='buy.html?plan=Pro&price=599'">
+  Choose Plan
+</button>
+
+    </div>
+
+    <div class="card">
+      <h3>Advanced</h3>
+      <div class="price">₹999/mo</div>
+      <ul>
+        <li>4 GB RAM</li>
+        <li>80 GB NVMe SSD</li>
+        <li>Unlimited Bandwidth</li>
+        <li>Premium Support</li>
+      </ul>
+      <button class="btn" onclick="window.location.href='buy.html?plan=Pro&price=999'">
+    Choose Plan
+    </button>
+
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  © 2026 AkshitBot. All rights reserved.
+</footer>
+
+</body>
+</html>
+
