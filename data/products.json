@@ -1,0 +1,12 @@
+[
+  {
+    "id": "prd-vps-1-3529",
+    "type": "VPS",
+    "name": "vps 1",
+    "ram": "4 GB",
+    "cpu": "2 vCPU",
+    "storage": "50 GB SSD",
+    "price": 500,
+    "description": "Features Included:\n\nFull Root Access\n\nSSD Storage (Fast Speed)\n\n24/7 Server Uptime\n\nInstant Setup\n\nWindows / Linux Support"
+  }
+]

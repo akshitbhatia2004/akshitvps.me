@@ -1,0 +1,9 @@
+{
+  "name": "skynode-vps-rdp-shop",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"console.log('No build step required for this project')\"",
+    "start": "node server.js"
+  }
+}

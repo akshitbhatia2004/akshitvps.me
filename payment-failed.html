@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Failed</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="status">
+  <main class="status-page">
+    <section class="panel status-panel">
+      <p class="eyebrow">Payment Failed</p>
+      <h1>Payment was not completed.</h1>
+      <p>The order remains pending until payment is verified. The customer can retry payment or contact support.</p>
+      <div id="statusOrderMeta" class="status-meta"></div>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="index.html#checkout">Try Again</a>
+        <a class="btn btn-secondary" href="index.html#tracking">Track Order</a>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+  <script src="status-pages.js"></script>
+</body>
+</html>
