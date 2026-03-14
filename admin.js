@@ -1,3 +1,34 @@
+function getProductMessageElement() {
+  return document.getElementById("productMessage") || document.getElementById("adminLoginMessage");
+}
+
+function setProductFormMode(editing) {
+  const submitButton = document.getElementById("productSubmitButton");
+  const cancelButton = document.getElementById("productCancelButton");
+  if (submitButton) {
+    submitButton.textContent = editing ? "Update Product" : "Add Product";
+  }
+  if (cancelButton) {
+    cancelButton.classList.toggle("hidden", !editing);
+  }
+}
+
+function resetProductForm(message = "") {
+  const form = document.getElementById("productForm");
+  if (form) {
+    form.reset();
+  }
+  const productId = document.getElementById("productId");
+  if (productId) {
+    productId.value = "";
+  }
+  setProductFormMode(false);
+  const productMessage = getProductMessageElement();
+  if (productMessage) {
+    productMessage.textContent = message;
+  }
+}
+
 async function renderAdminProducts() {
   const list = document.getElementById("adminProductList");
   if (!list) {
@@ -12,7 +43,10 @@ async function renderAdminProducts() {
           <span class="chip">${product.type}</span>
           <h3>${product.name}</h3>
         </div>
-        <button class="mini-button delete-product" data-product-id="${product.id}" type="button">Delete</button>
+        <div class="admin-actions">
+          <button class="mini-button edit-product" data-product-id="${product.id}" type="button">Edit</button>
+          <button class="mini-button delete-product" data-product-id="${product.id}" type="button">Delete</button>
+        </div>
       </div>
       <p>${product.description}</p>
       <div class="meta">
@@ -24,12 +58,43 @@ async function renderAdminProducts() {
     </div>
   `).join("");
 
+  list.querySelectorAll(".edit-product").forEach((button) => {
+    button.addEventListener("click", () => {
+      const product = products.find((item) => item.id === button.dataset.productId);
+      if (!product) {
+        return;
+      }
+      document.getElementById("productId").value = product.id;
+      document.getElementById("productName").value = product.name;
+      document.getElementById("productType").value = product.type;
+      document.getElementById("productRam").value = product.ram;
+      document.getElementById("productCpu").value = product.cpu;
+      document.getElementById("productStorage").value = product.storage;
+      document.getElementById("productPrice").value = product.price;
+      document.getElementById("productDescription").value = product.description;
+      setProductFormMode(true);
+      const productMessage = getProductMessageElement();
+      if (productMessage) {
+        productMessage.textContent = `Editing ${product.name}`;
+      }
+      document.getElementById("productName").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+
   list.querySelectorAll(".delete-product").forEach((button) => {
     button.addEventListener("click", async () => {
-      await SkyNodeApp.request(`/api/admin/products/${encodeURIComponent(button.dataset.productId)}`, {
-        method: "DELETE"
-      });
-      renderAdminProducts().catch(showAdminMessage);
+      try {
+        await SkyNodeApp.request(`/api/admin/products/${encodeURIComponent(button.dataset.productId)}`, {
+          method: "DELETE"
+        });
+        resetProductForm("Product deleted successfully.");
+        renderAdminProducts().catch(showAdminMessage);
+      } catch (error) {
+        const productMessage = getProductMessageElement();
+        if (productMessage) {
+          productMessage.textContent = error.message;
+        }
+      }
     });
   });
 }
@@ -134,6 +199,7 @@ function setupAdminLogin() {
 
 function setupProductForm() {
   const form = document.getElementById("productForm");
+  const cancelButton = document.getElementById("productCancelButton");
   if (!form) {
     return;
   }
@@ -141,21 +207,44 @@ function setupProductForm() {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const name = document.getElementById("productName").value.trim();
-    await SkyNodeApp.request("/api/admin/products", {
-      method: "POST",
-      body: JSON.stringify({
-        type: document.getElementById("productType").value,
-        name,
-        ram: document.getElementById("productRam").value.trim(),
-        cpu: document.getElementById("productCpu").value.trim(),
-        storage: document.getElementById("productStorage").value.trim(),
-        price: document.getElementById("productPrice").value,
-        description: document.getElementById("productDescription").value.trim()
-      })
-    });
-    form.reset();
-    renderAdminProducts().catch(showAdminMessage);
+    const productId = document.getElementById("productId").value.trim();
+    const payload = {
+      type: document.getElementById("productType").value,
+      name,
+      ram: document.getElementById("productRam").value.trim(),
+      cpu: document.getElementById("productCpu").value.trim(),
+      storage: document.getElementById("productStorage").value.trim(),
+      price: document.getElementById("productPrice").value,
+      description: document.getElementById("productDescription").value.trim()
+    };
+    try {
+      if (productId) {
+        await SkyNodeApp.request(`/api/admin/products/${encodeURIComponent(productId)}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload)
+        });
+        resetProductForm("Product updated successfully.");
+      } else {
+        await SkyNodeApp.request("/api/admin/products", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        resetProductForm("Product added successfully.");
+      }
+      renderAdminProducts().catch(showAdminMessage);
+    } catch (error) {
+      const productMessage = getProductMessageElement();
+      if (productMessage) {
+        productMessage.textContent = error.message;
+      }
+    }
   });
+
+  if (cancelButton) {
+    cancelButton.addEventListener("click", () => {
+      resetProductForm();
+    });
+  }
 }
 
 function setupDeliveryForm() {

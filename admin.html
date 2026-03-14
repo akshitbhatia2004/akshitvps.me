@@ -58,6 +58,7 @@
               <h3>Product system</h3>
             </div>
             <form id="productForm" class="admin-form-grid">
+              <input id="productId" type="hidden">
               <div class="field">
                 <label for="productName">Name</label>
                 <input id="productName" type="text" required>
@@ -89,10 +90,12 @@
                 <label for="productDescription">Description</label>
                 <textarea id="productDescription" rows="3" required></textarea>
               </div>
-              <div class="field-wide">
-                <button class="btn btn-primary" type="submit">Add Product</button>
+              <div class="field-wide form-actions">
+                <button id="productSubmitButton" class="btn btn-primary" type="submit">Add Product</button>
+                <button id="productCancelButton" class="btn btn-secondary hidden" type="button">Cancel Edit</button>
               </div>
             </form>
+            <div id="productMessage" class="inline-note"></div>
           </div>
 
           <div class="panel">

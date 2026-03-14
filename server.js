@@ -493,12 +493,28 @@ async function addProduct(product) {
   return mapProductRow(rows[0]);
 }
 
-async function removeProduct(productId) {
-  await supabaseRequest("products", {
-    method: "DELETE",
+async function updateProduct(productId, product) {
+  const rows = await supabaseRequest("products", {
+    method: "PATCH",
     query: `?id=eq.${encodeURIComponent(productId)}`,
-    prefer: "return=minimal"
+    body: mapProductToRow({ ...product, id: productId })
   });
+  return rows[0] ? mapProductRow(rows[0]) : null;
+}
+
+async function removeProduct(productId) {
+  try {
+    await supabaseRequest("products", {
+      method: "DELETE",
+      query: `?id=eq.${encodeURIComponent(productId)}`,
+      prefer: "return=minimal"
+    });
+  } catch (error) {
+    if (String(error.message).toLowerCase().includes("foreign key")) {
+      throw new Error("This product is already used in orders, so it cannot be deleted.");
+    }
+    throw error;
+  }
 }
 
 async function getOrders() {
@@ -891,6 +907,26 @@ async function handleApi(req, res, url) {
     const id = decodeURIComponent(url.pathname.split("/").pop());
     await removeProduct(id);
     sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  if (req.method === "PATCH" && url.pathname.startsWith("/api/admin/products/")) {
+    const id = decodeURIComponent(url.pathname.split("/").pop());
+    const body = parseJsonBody(await readBody(req));
+    const updated = await updateProduct(id, {
+      type: body.type,
+      name: body.name,
+      ram: body.ram,
+      cpu: body.cpu,
+      storage: body.storage,
+      price: Number(body.price),
+      description: body.description
+    });
+    if (!updated) {
+      sendJson(res, 404, { error: "Product not found." });
+      return;
+    }
+    sendJson(res, 200, { product: updated });
     return;
   }
 
