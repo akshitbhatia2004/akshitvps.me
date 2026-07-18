@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure VPS & RDP Control Panel</title>
+    <title>Enterprise VPS & RDP Hosting Billing Dashboard</title>
     <!-- Tailwind CSS for Pro UI -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
@@ -31,47 +31,124 @@
         </div>
     </div>
 
-    <!-- 2. MAIN DASHBOARD CONTENT -->
+    <!-- 2. INVOICE MODAL POPUP -->
+    <div id="invoice-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white text-slate-800 p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 relative">
+            <button onclick="closeInvoice()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer">&times;</button>
+            
+            <!-- Invoice Header -->
+            <div class="flex justify-between items-start border-b border-slate-200 pb-4 mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-indigo-600 tracking-tight">INVOICE RECEIPT</h2>
+                    <p class="text-xs text-slate-500 mt-0.5" id="inv-id">INV-0000</p>
+                </div>
+                <div class="text-right">
+                    <h3 class="text-sm font-bold text-slate-800">Server Deployments</h3>
+                    <p class="text-[11px] text-slate-400">Infrastructure Billing Log</p>
+                </div>
+            </div>
+
+            <!-- Invoice Details -->
+            <div class="grid grid-cols-2 gap-4 text-xs mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <div>
+                    <span class="block font-semibold text-slate-500 uppercase">Billed To:</span>
+                    <span class="font-bold text-slate-800 text-sm" id="inv-client">-</span>
+                </div>
+                <div class="text-right">
+                    <span class="block font-semibold text-slate-500 uppercase">Billing Date:</span>
+                    <span class="font-bold text-slate-800" id="inv-date">-</span>
+                </div>
+            </div>
+
+            <!-- Itemized Table -->
+            <table class="w-full text-left text-xs mb-6">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-400 uppercase font-semibold">
+                        <th class="pb-2">Description / Node Spec</th>
+                        <th class="pb-2 text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    <tr>
+                        <td class="py-3">
+                            <div class="font-bold text-slate-800" id="inv-item-type">-</div>
+                            <div class="text-slate-400 font-mono text-[11px]" id="inv-item-details">-</div>
+                        </td>
+                        <td class="py-3 text-right font-bold text-slate-900 text-sm" id="inv-item-price">₹0</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Total Box -->
+            <div class="flex justify-between items-center bg-indigo-50 p-4 rounded-xl border border-indigo-100 mb-4">
+                <span class="text-sm font-bold text-indigo-900">Payment Status:</span>
+                <span id="inv-status-badge" class="px-2.5 py-0.5 rounded-md font-bold text-xs uppercase tracking-wider bg-emerald-100 text-emerald-800">PAID</span>
+            </div>
+            
+            <p class="text-[10px] text-slate-400 text-center">Thank you for hosting with us. Remote login parameters are active.</p>
+        </div>
+    </div>
+
+    <!-- 3. MAIN DASHBOARD CONTENT -->
     <div class="max-w-[1600px] mx-auto hidden" id="main-dashboard">
         <!-- Header -->
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 border-b border-slate-800 pb-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 border-b border-slate-800 pb-6">
             <div>
                 <h1 class="text-3xl font-extrabold bg-gradient-to-r bg-clip-text text-transparent from-indigo-400 via-purple-400 to-pink-400 tracking-tight">
-                    ⚡ VPS & RDP Infrastructure Manager
+                    ⚡ Server Node & Invoice Control Center
                 </h1>
-                <p class="text-sm text-slate-400 mt-1">Smart Auto-Cycle Billing: Status changes to 'Paid' instantly reset cycles.</p>
+                <p class="text-sm text-slate-400 mt-1">Manage infrastructure deployments, customized billing logs, and digital receipt delivery.</p>
             </div>
             <div class="flex flex-wrap items-center gap-4 bg-slate-900 px-4 py-2 rounded-xl border border-slate-800 text-sm">
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-slate-400 font-medium">Secure Session</span>
+                    <span class="text-slate-400 font-medium">Session Secure</span>
                 </div>
                 <span class="text-slate-700 hidden sm:inline">|</span>
                 <span id="current-date" class="text-indigo-400 font-semibold"></span>
                 <span class="text-slate-700 hidden sm:inline">|</span>
-                <!-- Quick Lock Button -->
                 <button onclick="lockDashboard()" class="bg-slate-950 hover:bg-slate-800 px-2.5 py-1 text-xs text-rose-400 font-medium border border-slate-800 rounded-lg cursor-pointer transition-colors">
-                    🔒 Lock Screen
+                    🔒 Lock Panel
                 </button>
             </div>
         </div>
 
+        <!-- Metric Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-slate-400 font-medium uppercase">Total Nodes</div>
+                <div class="text-2xl font-bold text-slate-200 mt-1" id="count-all">0</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-emerald-400 font-medium uppercase">Paid Active</div>
+                <div class="text-2xl font-bold text-emerald-400 mt-1" id="count-paid">0</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-amber-400 font-medium uppercase">Unpaid Pending</div>
+                <div class="text-2xl font-bold text-amber-400 mt-1" id="count-unpaid">0</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-rose-400 font-medium uppercase">Cancelled/Offline</div>
+                <div class="text-2xl font-bold text-rose-400 mt-1" id="count-cancelled">0</div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
-            <!-- Left Side: Professional Server Form -->
+            <!-- Left Side: Order Setup Form -->
             <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 h-fit shadow-xl">
                 <h2 class="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
-                    <span>🚀</span> Deploy New Server
+                    <span>🛒</span> Place New Server Order
                 </h2>
                 <form id="server-form" class="space-y-4 text-slate-300">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Client / Business Name</label>
-                        <input type="text" id="clientName" required placeholder="e.g. Rahul Tech" 
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Client Name</label>
+                        <input type="text" id="clientName" required placeholder="e.g. Rahul Sharma" 
                             class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg focus:outline-hidden focus:border-indigo-500 text-sm text-white">
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Server Type</label>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Node Type</label>
                             <select id="serverType" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg focus:outline-hidden focus:border-indigo-500 text-sm text-white bg-slate-950">
                                 <option value="RDP Admin">RDP Admin</option>
                                 <option value="RDP Shared">RDP Shared</option>
@@ -81,15 +158,15 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">OS / Spec</label>
-                            <input type="text" id="serverSpec" required placeholder="Win10 - 4vCPU/8GB" 
+                            <input type="text" id="serverSpec" required placeholder="Win Server 2022 - 8GB" 
                                 class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg focus:outline-hidden focus:border-indigo-500 text-sm text-white">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-2">
                         <div class="col-span-2">
-                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">IP Address</label>
-                            <input type="text" id="ipAddress" required placeholder="192.168.1.1" 
+                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">IP Allocation</label>
+                            <input type="text" id="ipAddress" required placeholder="185.23.45.12" 
                                 class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg focus:outline-hidden focus:border-indigo-500 text-sm font-mono text-white">
                         </div>
                         <div>
@@ -101,25 +178,25 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">RDP Username</label>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Username</label>
                             <input type="text" id="rdpUser" required placeholder="Administrator" 
                                 class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg focus:outline-hidden focus:border-indigo-500 text-sm font-mono text-white">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Monthly Price</label>
-                            <input type="text" id="monthlyPrice" required placeholder="₹1,200" 
+                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Monthly Plan</label>
+                            <input type="text" id="monthlyPrice" required placeholder="₹1500" 
                                 class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg focus:outline-hidden focus:border-indigo-500 text-sm text-white">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Start Date</label>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Cycle Payment Date</label>
                             <input type="date" id="startDate" required 
                                 class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg focus:outline-hidden focus:border-indigo-500 text-sm text-white">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Status</label>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Order Status</label>
                             <select id="paymentStatus" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg focus:outline-hidden focus:border-indigo-500 text-sm text-white bg-slate-950">
                                 <option value="Paid">Paid</option>
                                 <option value="Unpaid">Unpaid</option>
@@ -130,30 +207,39 @@
 
                     <button type="submit" 
                         class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-all text-sm cursor-pointer mt-2 shadow-lg shadow-indigo-600/20">
-                        Deploy Node to Dashboard
+                        Create & Activate Order
                     </button>
                 </form>
             </div>
 
-            <!-- Right Side: Master Node Table -->
-            <div class="xl:col-span-3">
+            <!-- Right Side: Segmented Logs & Table Router -->
+            <div class="xl:col-span-3 space-y-4">
+                <!-- Navigation Tabs -->
+                <div class="flex gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
+                    <button onclick="switchTab('All')" id="tab-All" class="px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer bg-indigo-600 text-white">📁 All Logs</button>
+                    <button onclick="switchTab('Paid')" id="tab-Paid" class="px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer text-slate-400 hover:bg-slate-800/50">🟢 Paid Records</button>
+                    <button onclick="switchTab('Unpaid')" id="tab-Unpaid" class="px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer text-slate-400 hover:bg-slate-800/50">🟡 Unpaid Records</button>
+                    <button onclick="switchTab('Cancelled')" id="tab-Cancelled" class="px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer text-slate-400 hover:bg-slate-800/50">🔴 Cancelled</button>
+                </div>
+
+                <!-- Master Node Table -->
                 <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-950 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                                    <th class="py-4 px-6">Client / Type / Spec</th>
-                                    <th class="py-4 px-6">Connection (IP:Port)</th>
-                                    <th class="py-4 px-6">Username</th>
-                                    <th class="py-4 px-6">Start Date</th>
-                                    <th class="py-4 px-6">Price</th>
-                                    <th class="py-4 px-6">Time Remaining</th>
-                                    <th class="py-4 px-6">Status</th>
+                                    <th class="py-4 px-6">Client / Node</th>
+                                    <th class="py-4 px-6">Connection Parameter</th>
+                                    <th class="py-4 px-6">Login Parameter</th>
+                                    <th class="py-4 px-6">Last Payment Date</th>
+                                    <th class="py-4 px-6">Plan Rate</th>
+                                    <th class="py-4 px-6">Remaining Cycle</th>
+                                    <th class="py-4 px-6">Status Log</th>
                                     <th class="py-4 px-6 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="server-table-body" class="divide-y divide-slate-800/60 text-sm text-slate-300">
-                                <!-- Dynamic Server Node rows go here -->
+                                <!-- Generated Dynamic Rows -->
                             </tbody>
                         </table>
                     </div>
@@ -162,50 +248,61 @@
         </div>
     </div>
 
+    <!-- DATE MODAL POPUP FOR PAID ACTION -->
+    <div id="date-picker-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 w-full max-w-sm shadow-2xl">
+            <h3 class="text-md font-bold text-slate-200 mb-2">📅 Select Payment Arrival Date</h3>
+            <p class="text-xs text-slate-400 mb-4">Set the exact date the client made the transaction to recalculate their new 30-day billing line.</p>
+            <input type="date" id="custom-payment-date" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white mb-4 focus:outline-hidden focus:border-indigo-500 text-sm">
+            <div class="flex justify-end gap-3 text-xs font-semibold">
+                <button onclick="closeDateModal()" class="px-3 py-2 text-slate-400 hover:text-slate-200 cursor-pointer">Cancel</button>
+                <button onclick="confirmPaidTransition()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white cursor-pointer">Confirm Activation</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Data & Security Initialization
         let serverData = JSON.parse(localStorage.getItem('serverEntries')) || [];
         let storedPassword = localStorage.getItem('panelMasterPassword');
+        let currentTab = 'All';
+        let targetedIndexForPaid = null;
 
         const lockScreen = document.getElementById('lock-screen');
         const mainDashboard = document.getElementById('main-dashboard');
         const lockForm = document.getElementById('lock-form');
         const passInput = document.getElementById('master-password-input');
-        const lockTitle = document.getElementById('lock-title');
-        const lockDesc = document.getElementById('lock-desc');
-        const lockIcon = document.getElementById('lock-icon');
-        const lockBtn = document.getElementById('lock-btn');
+        
+        // Form & Table Elements
+        const form = document.getElementById('server-form');
+        const tableBody = document.getElementById('server-table-body');
+        
+        // Set today's default date into inputs
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('startDate').value = `${yyyy}-${mm}-${dd}`;
+        document.getElementById('current-date').innerText = today.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
-        // Check if password setup is needed
+        // Password Security Core Loop
         if (!storedPassword) {
-            lockIcon.innerText = "🛠️";
-            lockTitle.innerText = "Setup Security First";
-            lockDesc.innerText = "Create a new Master Password to protect your dashboard data.";
-            lockBtn.innerText = "Set Password & Open";
+            document.getElementById('lock-icon').innerText = "🛠️";
+            document.getElementById('lock-title').innerText = "Setup Security Panel";
+            document.getElementById('lock-desc').innerText = "Create a master deployment passcode to keep server logs fully classified.";
+            document.getElementById('lock-btn').innerText = "Set Credentials & Open";
         }
 
-        // Lock/Unlock Logic
         lockForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const entered = passInput.value.trim();
-
             if (!storedPassword) {
-                // First-time setup
-                if(entered.length < 4) {
-                    alert("Password must be at least 4 characters long!");
-                    return;
-                }
+                if(entered.length < 4) { alert("Code must be 4+ digits"); return; }
                 localStorage.setItem('panelMasterPassword', entered);
                 storedPassword = entered;
                 unlockDashboard();
             } else {
-                // Verification
-                if (entered === storedPassword) {
-                    unlockDashboard();
-                } else {
-                    alert("Incorrect Password! Access Denied.");
-                    passInput.value = '';
-                }
+                if (entered === storedPassword) unlockDashboard();
+                else { alert("Access Denied"); passInput.value = ''; }
             }
         });
 
@@ -219,33 +316,48 @@
             mainDashboard.classList.add('hidden');
             lockScreen.classList.remove('hidden');
             passInput.value = '';
-            // Reset to check view state text
-            if(storedPassword) {
-                lockIcon.innerText = "🔒";
-                lockTitle.innerText = "Access Restricted";
-                lockDesc.innerText = "Enter Master Password to view infrastructure dashboard.";
-                lockBtn.innerText = "Unlock Panel";
-            }
         }
 
-        // Core Dashboard Logic (Dates & Table Rendering)
-        const today = new Date();
-        document.getElementById('current-date').innerText = today.toLocaleDateString('en-IN', { 
-            day: 'numeric', month: 'short', year: 'numeric' 
-        });
+        // Tab Switcher Router
+        window.switchTab = function(tabName) {
+            currentTab = tabName;
+            ['All', 'Paid', 'Unpaid', 'Cancelled'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tabName) {
+                    btn.className = "px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer bg-indigo-600 text-white";
+                } else {
+                    btn.className = "px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer text-slate-400 hover:bg-slate-800/50";
+                }
+            });
+            renderTable();
+        }
 
-        const form = document.getElementById('server-form');
-        const tableBody = document.getElementById('server-table-body');
+        // Count System Update
+        document.getElementById('custom-payment-date').value = `${yyyy}-${mm}-${dd}`;
+        function updateMetrics() {
+            document.getElementById('count-all').innerText = serverData.length;
+            document.getElementById('count-paid').innerText = serverData.filter(d => d.status === 'Paid').length;
+            document.getElementById('count-unpaid').innerText = serverData.filter(d => d.status === 'Unpaid').length;
+            document.getElementById('count-cancelled').innerText = serverData.filter(d => d.status === 'Cancelled').length;
+        }
 
+        // Render Function Engine
         function renderTable() {
             tableBody.innerHTML = '';
-            
-            if(serverData.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-slate-500 font-medium">No live server nodes deployed yet. Generate one from the left panel.</td></tr>`;
+            updateMetrics();
+
+            // Filter out according to tab selection
+            let filteredData = serverData.map((item, originalIndex) => ({ ...item, originalIndex }));
+            if (currentTab !== 'All') {
+                filteredData = filteredData.filter(item => item.status === currentTab);
+            }
+
+            if(filteredData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-slate-500 font-medium">No system metrics matching the current workspace profile.</td></tr>`;
                 return;
             }
 
-            serverData.forEach((row, index) => {
+            filteredData.forEach((row) => {
                 const start = new Date(row.startDate);
                 const nextRenewal = new Date(start);
                 nextRenewal.setMonth(nextRenewal.getMonth() + 1);
@@ -263,7 +375,7 @@
                 if (row.status === "Cancelled") {
                     daysLeftHTML = `<span class="text-slate-600 font-bold">—</span>`;
                     statusHTML = `
-                        <select onchange="updateStatus(${index}, this.value)" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-950 text-red-400 border border-red-900 cursor-pointer focus:outline-hidden">
+                        <select onchange="handleStatusChange(${row.originalIndex}, this.value)" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-950 text-red-400 border border-red-900 cursor-pointer focus:outline-hidden">
                             <option value="Cancelled" selected>Cancelled</option>
                             <option value="Paid">Paid</option>
                             <option value="Unpaid">Unpaid</option>
@@ -279,7 +391,7 @@
 
                     if (row.status === "Paid") {
                         statusHTML = `
-                            <select onchange="updateStatus(${index}, this.value)" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-900 cursor-pointer focus:outline-hidden">
+                            <select onchange="handleStatusChange(${row.originalIndex}, this.value)" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-900 cursor-pointer focus:outline-hidden">
                                 <option value="Paid" selected>Paid</option>
                                 <option value="Unpaid">Unpaid</option>
                                 <option value="Cancelled">Cancelled</option>
@@ -287,7 +399,7 @@
                         `;
                     } else if (row.status === "Unpaid") {
                         statusHTML = `
-                            <select onchange="updateStatus(${index}, this.value)" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-950 text-amber-400 border border-amber-900 cursor-pointer focus:outline-hidden">
+                            <select onchange="handleStatusChange(${row.originalIndex}, this.value)" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-950 text-amber-400 border border-amber-900 cursor-pointer focus:outline-hidden">
                                 <option value="Unpaid" selected>Unpaid</option>
                                 <option value="Paid">Paid</option>
                                 <option value="Cancelled">Cancelled</option>
@@ -323,11 +435,11 @@
                         <td class="py-4 px-6">
                             ${statusHTML}
                         </td>
-                        <td class="py-4 px-6 text-right space-x-3">
-                            <button onclick="renewServer(${index})" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 cursor-pointer transition-colors bg-indigo-950/40 px-2 py-1 rounded border border-indigo-900/40">
-                                Renew
+                        <td class="py-4 px-6 text-right space-x-3 whitespace-nowrap">
+                            <button onclick="openInvoice(${row.originalIndex})" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 px-2 py-1 rounded border border-emerald-900/40 cursor-pointer">
+                                📄 Invoice
                             </button>
-                            <button onclick="deleteEntry(${index})" class="text-xs font-semibold text-rose-500 hover:text-rose-400 cursor-pointer transition-colors">
+                            <button onclick="deleteEntry(${row.originalIndex})" class="text-xs font-semibold text-rose-500 hover:text-rose-400 cursor-pointer transition-colors">
                                 Wipe
                             </button>
                         </td>
@@ -336,6 +448,7 @@
             });
         }
 
+        // Add Order Submit Hook
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const newEntry = {
@@ -352,26 +465,64 @@
             serverData.push(newEntry);
             saveAndRefresh();
             form.reset();
+            document.getElementById('startDate').value = `${yyyy}-${mm}-${dd}`;
         });
 
-        window.updateStatus = function(index, newStatus) {
-            serverData[index].status = newStatus;
-            if (newStatus === "Paid") {
-                const todayStr = new Date().toISOString().split('T')[0];
-                serverData[index].startDate = todayStr;
+        // Smart Intercept Status Dropdown Routine
+        window.handleStatusChange = function(index, value) {
+            if (value === "Paid") {
+                targetedIndexForPaid = index;
+                // Pop the modal up to ask for date explicitly
+                document.getElementById('date-picker-modal').classList.remove('hidden');
+            } else {
+                serverData[index].status = value;
+                saveAndRefresh();
             }
+        }
+
+        window.closeDateModal = function() {
+            document.getElementById('date-picker-modal').classList.add('hidden');
+            renderTable(); // reset dropdown position visual
+        }
+
+        window.confirmPaidTransition = function() {
+            const selectedDate = document.getElementById('custom-payment-date').value;
+            if(!selectedDate) { alert("Please pick a valid payment timeline date."); return; }
+            
+            serverData[targetedIndexForPaid].status = "Paid";
+            serverData[targetedIndexForPaid].startDate = selectedDate; // Set custom payment arrival date
+            
+            document.getElementById('date-picker-modal').classList.add('hidden');
             saveAndRefresh();
         }
 
-        window.renewServer = function(index) {
-            const todayStr = new Date().toISOString().split('T')[0];
-            serverData[index].startDate = todayStr;
-            serverData[index].status = "Paid"; 
-            saveAndRefresh();
+        // Invoice View Engine
+        window.openInvoice = function(index) {
+            const data = serverData[index];
+            const cleanDate = new Date(data.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            document.getElementById('inv-id').innerText = `INV-NODE-${1000 + index}`;
+            document.getElementById('inv-client').innerText = data.client;
+            document.getElementById('inv-date').innerText = cleanDate;
+            document.getElementById('inv-item-type').innerText = `${data.type} Deployment`;
+            document.getElementById('inv-item-details').innerText = `IP: ${data.ip}:${data.port} | OS Spec: ${data.spec} | Account: ${data.username}`;
+            document.getElementById('inv-item-price').innerText = data.price;
+            
+            const badge = document.getElementById('inv-status-badge');
+            badge.innerText = data.status;
+            if(data.status === 'Paid') badge.className = "px-2.5 py-0.5 rounded-md font-bold text-xs uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200";
+            if(data.status === 'Unpaid') badge.className = "px-2.5 py-0.5 rounded-md font-bold text-xs uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200";
+            if(data.status === 'Cancelled') badge.className = "px-2.5 py-0.5 rounded-md font-bold text-xs uppercase tracking-wider bg-red-100 text-red-800 border border-red-200";
+
+            document.getElementById('invoice-modal').classList.remove('hidden');
+        }
+
+        window.closeInvoice = function() {
+            document.getElementById('invoice-modal').classList.add('hidden');
         }
 
         window.deleteEntry = function(index) {
-            if(confirm("Wipe this server configuration completely from logs?")) {
+            if(confirm("Wipe this system metric entry completely from structural tracking logs?")) {
                 serverData.splice(index, 1);
                 saveAndRefresh();
             }
